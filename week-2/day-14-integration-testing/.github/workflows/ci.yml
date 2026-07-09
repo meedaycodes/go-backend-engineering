@@ -1,0 +1,44 @@
+name: CI
+
+# Triggers: run on every push to main and every pull request targeting main.
+# This ensures no broken code lands on the main branch undetected.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository code into the runner's workspace.
+      - uses: actions/checkout@v4
+
+      # Install the specified Go version on the runner.
+      # Pinning the version prevents surprise failures from toolchain upgrades.
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      # Ensure go.mod and go.sum are consistent with the source code.
+      # If tidy produces changes, it means the module files are out of sync.
+      - name: Tidy
+        run: go mod tidy
+
+      # Run go vet to catch suspicious constructs before building.
+      # Fails fast on obvious errors without a full compilation.
+      - name: Vet
+        run: go vet ./...
+
+      # Compile all packages. Catches type errors, missing imports, and
+      # syntax issues that vet does not cover.
+      - name: Build
+        run: go build ./...
+
+      # Run all tests with the race detector. -race instruments the binary
+      # to detect concurrent memory access bugs at runtime.
+      - name: Test
+        run: go test -v -race ./...

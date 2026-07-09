@@ -1,0 +1,29 @@
+version: "2"
+
+linters:
+  enable:
+    # govet runs the same checks as `go vet` — catches suspicious constructs
+    # like printf format mismatches, unreachable code, and misused sync types.
+    - govet
+
+    # errcheck catches ignored error return values — the most common source of
+    # silent failures in Go. Every error must be checked or explicitly discarded.
+    - errcheck
+
+    # staticcheck is a deep static analyser. Catches logic bugs, deprecated API
+    # usage, and redundant code. Also subsumes gosimple and unused in v2.
+    - staticcheck
+
+    # ineffassign detects variables that are assigned a value which is never
+    # read — usually indicates a missing error check or dead code.
+    - ineffassign
+
+  settings:
+    errcheck:
+      # Also flag unchecked type assertions e.g. val.(string) — these panic
+      # at runtime if the type is wrong. Use the two-value form instead.
+      check-type-assertions: true
+
+run:
+  # Maximum time golangci-lint is allowed to run before it is killed.
+  timeout: 5m

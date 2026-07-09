@@ -1,0 +1,21 @@
+# Binaries
+bin/
+*.exe
+*.out
+
+# Environment files — never commit secrets
+.env
+.env.*
+
+# Go test cache
+*.test
+*.prof
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
