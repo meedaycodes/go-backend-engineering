@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: goapp-config
+data:
+  SERVER_PORT: "8081"
+  REDIS_ADDR: "localhost:6379"
