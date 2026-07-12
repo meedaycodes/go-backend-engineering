@@ -95,7 +95,7 @@ func TestMain(m *testing.M) {
 
 	r := chi.NewRouter()
 
-	r.Use(middleware.RateLimit())
+	//r.Use(middleware.RateLimit())
 	r.Use(middleware.Recover)
 	r.Use(middleware.Logging)
 
