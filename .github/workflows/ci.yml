@@ -17,7 +17,7 @@ jobs:
       - uses: golangci/golangci-lint-action@v6
         with:                                                                                                                                         
           working-directory: week-2/day-14-integration-testing
-          version: latest 
+          version: v2.12.2 
 
 
   test:
