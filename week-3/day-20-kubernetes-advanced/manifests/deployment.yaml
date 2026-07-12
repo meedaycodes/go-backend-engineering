@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goapp
+spec:
+  replicas: 2          # run 2 identical Pods
+  strategy:                                                                                                                                           
+    type: RollingUpdate                                                                                                                               
+    rollingUpdate:                                                                                                                                    
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: goapp       # which Pods this Deployment manages
+  template:            # the Pod template
+    metadata:
+      labels:
+        app: goapp     # must match selector above
+    spec:
+      containers:
+        - name: goapp
+          image: goapp:latest    # we'll load this into kind shortly
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          env:                   # inject from ConfigMap and Secret
+            - name: SERVER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: goapp-config
+                  key: SERVER_PORT
+            
+            - name: REDIS_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: goapp-config
+                  key: REDIS_ADDR
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: goapp-secret
+                  key: DATABASE_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: goapp-secret
+                  key: JWT_SECRET
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
