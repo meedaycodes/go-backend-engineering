@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:17
+
+    environment:
+      POSTGRES_USER: goapp
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: gobackend
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U goapp -d gobackend"]
+      interval: 10s
+      timeout: 10s
+      retries: 2
+
+  redis:
+    image: redis:7-alpine
+
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+
+  migrate:
+    image: migrate/migrate
+
+    volumes:
+      - ./migrations:/migrations
+    command: ["-path", "/migrations", "-database", "postgres://goapp:secret@postgres:5432/gobackend?sslmode=disable", "up"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      dockerfile: ../day-16-docker/Dockerfile
+
+    ports:
+      - "8081:8081"
+
+    environment:
+      DATABASE_URL: postgres://goapp:secret@postgres:5432/gobackend?sslmode=disable
+      REDIS_ADDR: redis:6379
+      JWT_SECRET: secret
+      SERVER_PORT: 8081
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres-data:
