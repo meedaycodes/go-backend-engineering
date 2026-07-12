@@ -1,0 +1,16 @@
+[Unit]
+Description=Go Backend API
+After=network.target
+
+[Service]
+Type=simple
+User=goapp
+ExecStart=/usr/local/bin/server
+Restart=on-failure
+RestartSec=5
+Environment=DATABASE_URL=postgres://localhost:5432/testdb?sslmode=disable
+Environment=SERVER_PORT=8080
+Environment=JWT_SECRET=test-secret
+
+[Install]
+WantedBy=multi-user.target
