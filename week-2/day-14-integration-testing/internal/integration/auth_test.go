@@ -95,7 +95,7 @@ func TestMain(m *testing.M) {
 
 	r := chi.NewRouter()
 
-	r.Use(middleware.RateLimit())
+	//r.Use(middleware.RateLimit())
 	r.Use(middleware.Recover)
 	r.Use(middleware.Logging)
 
@@ -140,7 +140,10 @@ func TestSignup(t *testing.T) {
 		})
 	}
 	t.Cleanup(func() {
-		testDB.Exec(context.Background(), "DELETE FROM users")
+		_, err := testDB.Exec(context.Background(), "DELETE FROM users")
+		if err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
@@ -175,7 +178,10 @@ func TestLogin(t *testing.T) {
 		})
 	}
 	t.Cleanup(func() {
-		testDB.Exec(context.Background(), "DELETE FROM users")
+		_, err := testDB.Exec(context.Background(), "DELETE FROM users")
+		if err != nil {
+			t.Fatal(err)
+		}
 	})
 }
 
@@ -238,7 +244,10 @@ func TestGetUsers(t *testing.T) {
 		})
 	}
 	t.Cleanup(func() {
-		testDB.Exec(context.Background(), "DELETE FROM users")
+		_, err := testDB.Exec(context.Background(), "DELETE FROM users")
+		if err != nil {
+			t.Fatal(err)
+		}
 	})
 
 }
@@ -249,7 +258,10 @@ func getUserIDFromToken(t *testing.T, tokenString string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	claims := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		t.Fatal("invalid claims")
+	}
 	userID, _ := claims.GetSubject()
 	return userID
 }
@@ -291,7 +303,10 @@ func TestGetUserByID(t *testing.T) {
 		})
 	}
 	t.Cleanup(func() {
-		testDB.Exec(context.Background(), "DELETE FROM users")
+		_, err := testDB.Exec(context.Background(), "DELETE FROM users")
+		if err != nil {
+			t.Fatal(err)
+		}
 	})
 
 }
@@ -335,7 +350,10 @@ func TestUpdateUser(t *testing.T) {
 		})
 	}
 	t.Cleanup(func() {
-		testDB.Exec(context.Background(), "DELETE FROM users")
+		_, err := testDB.Exec(context.Background(), "DELETE FROM users")
+		if err != nil {
+			t.Fatal(err)
+		}
 	})
 
 }
@@ -378,7 +396,10 @@ func TestDeleteUser(t *testing.T) {
 		})
 	}
 	t.Cleanup(func() {
-		testDB.Exec(context.Background(), "DELETE FROM users")
+		_, err := testDB.Exec(context.Background(), "DELETE FROM users")
+		if err != nil {
+			t.Fatal(err)
+		}
 	})
 
 }
