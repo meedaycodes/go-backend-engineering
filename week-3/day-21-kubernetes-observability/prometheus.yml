@@ -1,0 +1,17 @@
+# global sets defaults that apply to all scrape jobs unless overridden.
+global:
+  # scrape_interval controls how frequently Prometheus polls each target's
+  # /metrics endpoint. 15s is the standard default for most workloads.
+  scrape_interval: 15s
+
+# scrape_configs defines the list of targets Prometheus scrapes for metrics.
+scrape_configs:
+  # job_name is a label added to every metric collected from this target.
+  # It appears as job="goapp" in Prometheus queries and Grafana dashboards.
+  - job_name: goapp
+    static_configs:
+      # targets lists the host:port addresses to scrape. Prometheus appends
+      # /metrics to each target automatically. "app" resolves to the Go app
+      # container via Docker Compose's internal DNS.
+      - targets:
+          - app:8081
