@@ -1,0 +1,98 @@
+services:
+  postgres:
+    image: postgres:17
+
+    environment:
+      POSTGRES_USER: goapp
+      POSTGRES_PASSWORD: secret
+      # POSTGRES_DB creates this database on first boot. The app connects to it
+      # via DATABASE_URL using the service name "postgres" as the hostname.
+      POSTGRES_DB: gobackend
+
+    volumes:
+      # Named volume persists Postgres data across docker compose down/up cycles.
+      # Without this, all data is lost when the container stops.
+      - postgres-data:/var/lib/postgresql/data
+
+    healthcheck:
+      # pg_isready probes whether Postgres is accepting connections.
+      # The migrate and app services wait for this to pass before starting.
+      test: ["CMD-SHELL","pg_isready -U goapp -d gobackend"]
+      interval: 10s
+      timeout: 10s
+      retries: 2
+
+  redis:
+    image: redis:7-alpine
+
+    healthcheck:
+      # redis-cli ping returns PONG when Redis is ready to accept commands.
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+
+  migrate:
+    # golang-migrate runs the SQL migration files and exits. The app service
+    # waits for this to complete before starting via service_completed_successfully.
+    image: migrate/migrate
+
+    volumes:
+      # Mount local migrations folder into the container so migrate can read them.
+      - ./migrations:/migrations
+    command: ["-path", "/migrations", "-database", "postgres://goapp:secret@postgres:5432/gobackend?sslmode=disable", "up"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    build:
+      # context is the directory Docker uses to resolve COPY instructions.
+      context: .
+      dockerfile: ../day-16-docker/Dockerfile
+
+    ports:
+      # Expose the API on the host so curl and local tools can reach it.
+      - "8081:8081"
+
+    environment:
+      DATABASE_URL: postgres://goapp:secret@postgres:5432/gobackend?sslmode=disable
+      REDIS_ADDR: redis:6379
+      JWT_SECRET: secret
+      SERVER_PORT: 8081
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      # Ensures migrations have run before the app starts — avoids missing table errors.
+      migrate:
+        condition: service_completed_successfully
+
+  prometheus:
+    image: prom/prometheus
+
+    volumes:
+      # Mount the scrape config so Prometheus knows where to find the app's metrics.
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+    ports:
+      # Prometheus UI and API available at http://localhost:9090
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana
+
+    ports:
+      # Grafana UI available at http://localhost:3000
+      # Login: admin / secret (set via GF_SECURITY_ADMIN_PASSWORD)
+      - "3000:3000"
+
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=secret
+
+volumes:
+  # postgres-data is a named volume managed by Docker. It persists independently
+  # of the container lifecycle — data survives restarts and rebuilds.
+  postgres-data:
