@@ -4,6 +4,7 @@ ROADMAP.md
 
 # Binaries
 bin/
+server
 *.exe
 *.out
 
