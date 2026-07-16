@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:17
+
+    environment:
+      POSTGRES_USER: goapp
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: gobackend
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U goapp -d gobackend"]
+      interval: 10s
+      timeout: 10s
+      retries: 2
+
+  redis:
+    image: redis:7-alpine
+
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+
+  migrate:
+    image: migrate/migrate
+
+    volumes:
+      - ./migrations:/migrations
+    command: ["-path", "/migrations", "-database", "postgres://goapp:secret@postgres:5432/gobackend?sslmode=disable", "up"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  vault:
+      image: hashicorp/vault:latest
+      ports:
+        - "8200:8200"
+      environment:
+        VAULT_DEV_ROOT_TOKEN_ID: "dev-token"
+        VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+      cap_add:
+        - IPC_LOCK
+
+  
+
+volumes:
+  postgres-data:
