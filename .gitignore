@@ -12,6 +12,12 @@ server
 .env
 .env.*
 
+# TLS certificates and private keys — never commit
+certs/
+*.pem
+*.key
+*.crt
+
 # Go test cache
 *.test
 *.prof
